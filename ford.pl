@@ -227,7 +227,7 @@ logger("start");
 
 #check vars
 
-if ($start_int < $end_int) { 
+if ($start_int > $end_int) { 
 	logger ("bad limit iterations!");
 	exit 0;
 }
