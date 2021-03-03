@@ -13,6 +13,10 @@ our @w3=('r','o','b','e','r','t');
 
 our $logfile="/tmp/ford_res.log";
 
+# limit iterations
+our $start_int = 100000;
+our $end_int = 999999;
+
 my $fork_num=30; # Numbers of parallels processes
 
 sub check_d1 () {
@@ -52,13 +56,13 @@ sub check_d2 () {
 				if ($w2[$i] eq $w2[$k] and $i != $k) { 
 					unless ($_[$i] == $_[$k]) { 
  						$check=0; 
-						last;
+						return 0;
 					}
 				} 	
 				else {
 					unless ($_[$i] != $_[$k] and $i != $k) { 
 						$check=0; 
-						last;
+						return 0;
 					}
 				}
 			}
@@ -81,13 +85,13 @@ sub check_sum () {
 				if ($w3[$i] eq $w3[$k] and $i != $k) { 
 					unless ($sum[$i] == $sum[$k]) { 
  						$check=0;
-						last;
+						return 0;
 					}
 				} 	
 				else {
 					unless ($sum[$i] != $sum[$k] and $i != $k) { 
 						$check=0; 
-						last;
+						return 0;
 					}
 				}
 			}
@@ -117,13 +121,13 @@ sub compare_d1d2 () {
 				if ($w1[$i] eq $w2[$k]) { 
 					unless ($d1[$i] == $d2[$k]) { 
  						$check=0; 
-						last;
+						return 0;
 					}
 				} 	
 				else {
 					unless ($d1[$i] != $d2[$k]) { 
 						$check=0; 
-						last;
+						return 0;
 					}
 				}
 			}
@@ -150,13 +154,13 @@ sub compare_d1sum () {
 				if ($w1[$i] eq $w3[$k]) { 
 					unless ($d1[$i] == $d2[$k]) { 
  						$check=0; 
-						last;
+						return 0;
 					}
 				} 	
 				else {
 					unless ($d1[$i] != $d2[$k]) { 
 						$check=0; 
-						last;
+						return 0;
 					}
 				}
 			}
@@ -184,13 +188,13 @@ sub compare_d2sum () {
 				if ($w2[$i] eq $w3[$k]) { 
 					unless ($d1[$i] == $d2[$k]) { 
  						$check=0; 
-						last;
+						return 0;
 					}
 				} 	
 				else {
 					unless ($d1[$i] != $d2[$k]) { 
 						$check=0; 
-						last;
+						return 0;
 					}
 				}
 			}
@@ -213,18 +217,27 @@ sub logger {
 
 sub progress {
 	my $i = shift;
-	my $perc = $i * 100 /999999;
+	my $perc = $i * 100 /($end_int-$start_int);
 	print sprintf("%.2f", $perc)."% (".$i.")\n";
 }
 
 
 logger("start");
 
+
+#check vars
+
+if ($start_int < $end_int) { 
+	logger ("bad limit iterations!");
+	exit 0;
+}
+
+
 my $num = 0;	
 
 my $pm = Parallel::ForkManager->new($fork_num, '/tmp/');
 
-for (my $i=100000; $i<999999; ++$i) {
+for (my $i=$start_int; $i<$end_int; ++$i) {
 	++$num;
 	if ($num > 1000) {
 		$num = 0;
@@ -235,7 +248,7 @@ for (my $i=100000; $i<999999; ++$i) {
 	
 	$pm->start and next;
 	if (&check_d1(@d1) == 1) {
-		for (my $k=100000; $k<999999; ++$k) {
+		for (my $k=$start_int; $k<$end_int; ++$k) {
 			my @d2 = split // , $k;
 
 			if (&check_d2(@d2) == 1) {
